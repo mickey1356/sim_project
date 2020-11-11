@@ -1,0 +1,16 @@
+h1 {
+  text-align: center;
+  color: black;
+  font: "Verdana";
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+body {
+  background-color: #ccc;
+}
+
+canvas {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
