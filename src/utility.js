@@ -11,8 +11,8 @@ const MOVE_SPEED = 120; // moves x units per second
 const ICON_WIDTH = 40;
 const ICON_HEIGHT = 40;
 
-const RIDE_IMG_PATH = "../res/roller-coaster.png";
-const ENTRANCE_IMG_PATH = "../res/gate.jpg";
+const RIDE_IMG_PATH = "res/roller-coaster.png";
+const ENTRANCE_IMG_PATH = "res/gate.jpg";
 
 
 function getRandomColor() {
