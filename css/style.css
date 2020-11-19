@@ -14,3 +14,11 @@ canvas {
   margin-right: auto;
   display: block;
 }
+
+button {
+  display: inline-block;
+}
+
+.buttons {
+  text-align: center;
+}

@@ -30,9 +30,16 @@ class Agent {
       this.fill = "white";
     } else {
       const rides = this.map.rides.filter((r) => !(r === this.curNode));
-      const choice = Math.floor(Math.random() * rides.length);
-      this.targetNode = rides[choice];
-      this.agentState = AgentStates.MOVING;
+      if (rides.length == 0) {
+        // just exit (since this means that there's only 1 ride)
+        this.targetNode = this.map.entrance;
+        this.agentState = AgentStates.EXITING;
+        this.fill = "white";
+      } else {
+        const choice = Math.floor(Math.random() * rides.length);
+        this.targetNode = rides[choice];
+        this.agentState = AgentStates.MOVING;
+      }
     }
     // find a path there
     this.path = this.map.getPathToNode(this.curNode, this.targetNode);
@@ -55,7 +62,7 @@ class Agent {
     this.initialY = this.y;
 
     this.lerpT = 0; // varies from 0 to 1
-    this.timeRequired = distance(this.x, this.y, this.targetX, this.targetY) / MOVE_SPEED;
+    this.timeRequired = dist(this.x, this.y, this.targetX, this.targetY) / MOVE_SPEED;
   }
 
   update() {
@@ -99,6 +106,6 @@ class Agent {
       this.x = lerp(this.initialX, this.targetX, this.lerpT);
       this.y = lerp(this.initialY, this.targetY, this.lerpT);
     }
-    ellipse(this.x, this.y, 7);
+    ellipse(this.x, this.y, AGENT_RADIUS);
   }
 }

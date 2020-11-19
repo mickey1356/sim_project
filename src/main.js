@@ -1,9 +1,17 @@
 // global vars
 let simMap;
+let nodes = [];
+let connections = [];
 let entrance;
 let rides;
 let agents = [];
 let isRunning = false;
+
+// creator mode
+let creatorMode = false;
+let selected = false;
+let selectedNodeIndex = -1;
+let selecting = false;
 
 function setup() {
   createCanvas(WIDTH, HEIGHT);
@@ -11,28 +19,149 @@ function setup() {
   // set framerate at 30fps
   frameRate(30);
   createMap();
+
+  // create some basic control buttons
+  createP();
+  const divs = createDiv();
+  divs.class("buttons");
+
+  const startBtn = createButton("Start/Pause Simulation");
+  const resetBtn = createButton("Reset Simulation");
+  const pBtn = createP();
+  const createBtn = createButton("Toggle creator/simulator mode");
+  const defaultMapBtn = createButton("Create default map");
+  const resetMapBtn = createButton("Clear map");
+
+  startBtn.parent(divs);
+  resetBtn.parent(divs);
+  pBtn.parent(divs);
+  createBtn.parent(divs);
+  defaultMapBtn.parent(divs);
+  resetMapBtn.parent(divs);
+
+  startBtn.mouseClicked(toggleSim);
+  resetBtn.mouseClicked(resetSim);
+  createBtn.mouseClicked(toggleCreate);
+  defaultMapBtn.mouseClicked(defaultMap);
+  resetMapBtn.mouseClicked(resetMap);
 }
 
 function draw() {
-  background(128);
+  background(100);
 
-  // update function
-  simMap.drawMap();
-
-  drawRunning();
-
-  if (isRunning) {
-    updateLoop();
+  if (simMap) {
+    simMap.drawMap(creatorMode);
   }
 
-  // keep drawing agents
-  for (let agent of agents) {
-    agent.draw();
+  // update function
+  if (!creatorMode) {
+
+    drawRunning();
+
+    if (isRunning) {
+      updateLoop();
+    }
+
+    // keep drawing agents
+    for (let agent of agents) {
+      agent.draw();
+    }
+  } else {
+    // creator mode loop
+    fill(255);
+    textAlign(RIGHT);
+    text("====instructions====\n\
+          click to place a new node\ndrag from one node to another to form a route\nclick node to toggle its type\nevery ride must be reachable from the entrance\n\
+          =====colour key=====\n\
+          orange: entrance (max 1)\ncyan: ride\nblack: junction", WIDTH - TEXT_PADDING_RIGHT, TEXT_PADDING_TOP)
+    // add new nodes when you click
+
+    let flag = false;
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (dist(node.x, node.y, mouseX, mouseY) < SELECT_RADIUS) {
+        noStroke();
+        fill(200, 200, 200, 120);
+        circle(node.x, node.y, 2 * SELECT_RADIUS);
+        flag = true;
+        if (!selected && mouseIsPressed) {
+          selectedNodeIndex = i;
+          selected = true;
+        } else if (selected && !mouseIsPressed) {
+          // make sure this new connection isn't an existing one
+          let flag = true;
+          for (let connection of connections) {
+            if ((connection[0] == i && connection[1] == selectedNodeIndex) || (connection[0] == selectedNodeIndex && connection[1] == i)) flag = false;
+          }
+          if (flag) {
+            connections.push([selectedNodeIndex, i]);
+            simMap.connectNode(selectedNodeIndex, i);
+          }
+        }
+      }
+    }
+    selecting = flag;
+
+    if (selected) {
+      const node = nodes[selectedNodeIndex];
+      stroke("#f5220f");
+      line(node.x, node.y, mouseX, mouseY);
+      if (!mouseIsPressed) {
+        selected = false;
+        if (dist(node.x, node.y, mouseX, mouseY) < SELECT_RADIUS) {
+          node.toggleType();
+        }
+      }
+    }
   }
 }
 
 function mouseClicked() {
+  if (!selecting && mouseX > 0 && mouseY > 0 && mouseX < WIDTH && mouseY < HEIGHT) {
+    const node = new MapNode("ride", mouseX / WIDTH, mouseY / HEIGHT);
+    nodes.push(node);
+    if (simMap == null) {
+      simMap = new SimMap(nodes, connections);
+    }
+  }
+}
+
+function checkMap() {
+  if (simMap == null || !simMap.checkMap()) {
+    alert("Invalid map");
+    creatorMode = true;
+  } else {
+    creatorMode = false;
+  }
+}
+
+function toggleSim() {
+  checkMap();
   isRunning = !isRunning;
+}
+
+function resetSim() {
+  isRunning = false;
+  agents = [];
+}
+
+function defaultMap() {
+  if (creatorMode) createMap();
+}
+
+function resetMap() {
+  if (creatorMode) {
+    simMap = null;
+    nodes = [];
+    connections = [];
+  }
+}
+
+function toggleCreate() {
+  resetSim();
+  creatorMode = !creatorMode;
+
+  if (!creatorMode) checkMap();
 }
 
 function drawRunning() {
@@ -66,28 +195,13 @@ function createMap() {
   let n12 = new MapNode("ride", 0.6, 0.3);
 
   // set the global vars
-  rides = [n1, n3, n4, n6, n7, n8, n9, n10, n12];
-  entrance = e;
+  // rides = [n1, n3, n4, n6, n7, n8, n9, n10, n12];
+  // entrance = e;
 
   // initialise the actual map
-  let nodes = [e, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12];
-  simMap = new SimMap(nodes, entrance, rides);
-  simMap.connectNode(1, 2);
-  simMap.connectNode(2, 3);
-  simMap.connectNode(3, 0);
-  simMap.connectNode(0, 4);
-  simMap.connectNode(4, 5);
-  simMap.connectNode(5, 6);
-  simMap.connectNode(2, 7);
-  simMap.connectNode(3, 8);
-  simMap.connectNode(8, 4);
-  simMap.connectNode(5, 9);
-  simMap.connectNode(8, 11);
-  simMap.connectNode(7, 10);
-  simMap.connectNode(9, 12);
-  simMap.connectNode(10, 12);
-  simMap.connectNode(12, 11);
-  simMap.connectNode(11, 10);
+  nodes = [e, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12];
+  connections = [[1, 2], [2, 3], [3, 0], [0, 4], [4, 5], [5, 6], [2, 7], [3, 8], [8, 4], [5, 9], [8, 11], [7, 10], [9, 12], [10, 12], [12, 11], [11, 10]];
+  simMap = new SimMap(nodes, connections);
 }
 
 function updateLoop() {
