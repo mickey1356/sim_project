@@ -10,6 +10,8 @@ const NODE_TYPES = ["junc", "ride", "entrance"];
 // simulation parameters
 const ARRIVAL_PROB = 0.2;
 const DEPARTURE_PROB = 0.3;
+const PRIORITY_PROB = 0.1;
+const GRP_PROB = 0.9;
 const MOVE_SPEED = 120; // moves x units per second
 
 // resources and images
@@ -29,8 +31,9 @@ function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
   for (var i = 0; i < 6; i++) {
-    color += letters[Math.floor(Math.random() * 16)];
-  }
+		color += letters[Math.floor(Math.random()*16)];
+		}
+	
   return color;
 }
 

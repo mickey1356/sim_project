@@ -117,7 +117,7 @@ function draw() {
 }
 
 function mouseClicked() {
-  if (creatorMode && !selecting && mouseX > 0 && mouseY > 0 && mouseX < WIDTH && mouseY < HEIGHT) {
+  if (!selecting && mouseX > 0 && mouseY > 0 && mouseX < WIDTH && mouseY < HEIGHT) {
     const node = new MapNode("ride", mouseX / WIDTH, mouseY / HEIGHT);
     nodes.push(node);
     if (simMap == null) {
@@ -216,9 +216,23 @@ function updateLoop() {
 
 function addAgents() {
   if (Math.random() < ARRIVAL_PROB) {
-    console.log("entered");
-    const agent = new Agent(simMap);
-    agents.push(agent);
+	  if (Math.random() < PRIORITY_PROB) {
+		console.log("entered");
+		const agent = new Agent(simMap,priority = true, grp = false);	
+		agents.push(agent);
+		
+	} else if (Math.random() < GRP_PROB){
+		//for (var i = 0; i < Math.floor(Math.random() * 4)+1; i++) {
+		const agent = new Agent(simMap, priority = false, grp = true);	
+		agents.push(agent);
+		agents.push(agent);
+		//}
+		console.log("group entered");
+	} else {
+		console.log("entered");
+		const agent = new Agent(simMap, priority = false, grp = false);	
+		agents.push(agent);
+	}
   }
 }
 

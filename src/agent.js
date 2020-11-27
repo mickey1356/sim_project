@@ -10,17 +10,25 @@ const AgentStates = {
 Object.freeze(AgentStates);
 
 class Agent {
-  constructor(map) {
+  constructor(map, priority=false, grp = false) {
     this.map = map;
 
     this.agentState = AgentStates.ENTERED;
 
     this.x = map.entrance.x;
     this.y = map.entrance.y;
+	this.priority = priority;
+	this.grp = grp
 
     this.curNode = map.entrance;
-
-    this.fill = getRandomColor();
+	
+	if (this.priority == true){
+		this.fill = 'blue';
+	}
+    else if (this.grp == true){
+		this.fill = 'yellow';
+	} else {this.fill = 'green';}
+	
   }
 
   nextDestination() {
@@ -106,6 +114,10 @@ class Agent {
       this.x = lerp(this.initialX, this.targetX, this.lerpT);
       this.y = lerp(this.initialY, this.targetY, this.lerpT);
     }
-    ellipse(this.x, this.y, AGENT_RADIUS);
+	if (this.priority == true){
+		ellipse(this.x, this.y, 1.5*AGENT_RADIUS);
+	} else {
+		ellipse(this.x, this.y, AGENT_RADIUS);
+		}
   }
 }
