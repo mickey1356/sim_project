@@ -29,6 +29,12 @@ class Agent {
     } else {
       this.fill = 'green';
     }
+
+    // slightly randomise the movespeeds so that agents dont overlap
+    // can be removed if this behaviour is not wanted (just remove the randomisation)
+    // the magnitude of randomisation actually needs to be on the order of 10s in order to have a noticeable effect
+    // give it a range of +-20 from the original
+    this.moveSpeed = MOVE_SPEED + (Math.random() * 40 - 20);
   }
 
   nextDestination() {
@@ -70,7 +76,7 @@ class Agent {
     this.initialY = this.y;
 
     this.lerpT = 0; // varies from 0 to 1
-    this.timeRequired = dist(this.x, this.y, this.targetX, this.targetY) / MOVE_SPEED;
+    this.timeRequired = dist(this.x, this.y, this.targetX, this.targetY) / this.moveSpeed;
   }
 
   update() {
@@ -129,10 +135,10 @@ class Agent {
       this.x = lerp(this.initialX, this.targetX, this.lerpT);
       this.y = lerp(this.initialY, this.targetY, this.lerpT);
     }
-	if (this.priority == true){
-		ellipse(this.x, this.y, 1.5*AGENT_RADIUS);
-	} else {
-		ellipse(this.x, this.y, AGENT_RADIUS);
-		}
-  }
+    if (this.priority == true){
+      ellipse(this.x, this.y, 1.5 * AGENT_RADIUS);
+    } else {
+      ellipse(this.x, this.y, AGENT_RADIUS);
+      }
+    }
 }

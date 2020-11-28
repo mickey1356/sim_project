@@ -7,6 +7,14 @@ class SimMap {
     for (let connect of connections) {
       this.connectNode(connect[0], connect[1]);
     }
+
+    // set the rideIDs
+    for (let i = 0; i < this.rides.length; i++) {
+      this.rides[i].setRideName(i+1);
+    }
+
+    // run floyd warshall for setup()
+    this.floydWarshall();
   }
 
   checkMap() {
@@ -26,6 +34,14 @@ class SimMap {
       if (p == null) return false;
     }
 
+    // set the rideIDs
+    for (let i = 0; i < this.rides.length; i++) {
+      this.rides[i].setRideName(i+1);
+    }
+
+    // run floyd warshall for setup
+    this.floydWarshall();
+
     return true;
   }
 
@@ -35,13 +51,79 @@ class SimMap {
     n1.connect(n2);
     n2.connect(n1);
 
-    const edge = [[n1.x, n1.y], [n2.x, n2.y]]
-    this.edges.push(edge)
+    const edge = [[n1.x, n1.y], [n2.x, n2.y]];
+    this.edges.push(edge);
   }
 
-  // TODO: replace with APSP for constant lookups
-  getPathToNode(startNode, targetNode) {
+  // taken from the pseudocode in wikipedia: https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
+  floydWarshall() {
+    const N = this.nodes.length;
+    let dist = [];
+    this.next = [];
+    let i = 0;
 
+    for (i = 0; i < N; i++) {
+      let tDist = [];
+      let tNext = [];
+      for (let j = 0; j < N; j++) {
+        tDist.push(Infinity);
+        tNext.push(null);
+      }
+      dist.push(tDist);
+      this.next.push(tNext);
+    }
+
+    for (i = 0; i < N; i++) {
+      for (let edge of this.nodes[i].connections) {
+        for (let j = 0; j < N; j++) {
+          if (this.nodes[j] === edge[0]) {
+            dist[i][j] = edge[1];
+            this.next[i][j] = j;
+            break;
+          }
+        }
+      }
+    }
+    for (i = 0; i < N; i++) {
+      dist[i][i] = 0;
+      this.next[i][i] = i;
+    }
+    for (let k = 0; k < N; k++) {
+      for (i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+          if (dist[i][j] > dist[i][k] + dist[k][j]) {
+            dist[i][j] = dist[i][k] + dist[k][j];
+            this.next[i][j] = this.next[i][k];
+          }
+        }
+      }
+    }
+    console.log("fw done");
+  }
+
+  // unfortunately, not O(1) time, but O(n) due to path reconstruction on the fly
+  // but, this is faster than BFS and has distance-based traversal
+  // although, it doesn't seem to have any noticeable difference?
+  getPathToNode(startNode, targetNode) {
+    // have to search for the indices, unfortunately
+    let u, v;
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i] === startNode) u = i;
+      else if (this.nodes[i] === targetNode) v = i;
+    }
+
+    if (this.next[u][v] === null) return []; // this should never happen
+
+    let path = [startNode];
+    while (u != v) {
+      u = this.next[u][v];
+      path.push(this.nodes[u]);
+    }
+    return path;
+  }
+
+  // TODO: remove this once we are sure that floyd warshall works
+  getPathToNodeOld(startNode, targetNode) {
     let visited = new WeakMap();
     for (let node of this.nodes) {
       visited.set(node, false);
@@ -132,7 +214,18 @@ class MapNode {
       // if this is a ride, just choose random values for the ride parameters
       // possible TODO: allow for editing of these parameterss
       this.setRideParameters(getRandomCapacity(), getRandomRuntime(), getRandomTurnover());
+
+      // if this is a ride, also set the rideID (for display purposes)
+      // this.rideName = `Ride ${++rideID}`;
+
+      // for rides, let us store how many people are in queue at each second (basically every 30 frames)
+      this.queueHist = [0];
+      this.maxQueueSoFar = 1;
     }
+  }
+
+  setRideName(rideID) {
+    this.rideName = `Ride ${rideID}`;
   }
 
   reset() {
@@ -141,6 +234,8 @@ class MapNode {
     this.ridingAgents = [];
     this.runCooldowns = [];
     this.turnoverCooldown = 0;
+    this.queueHist = [0];
+    this.maxQueueSoFar = 1;
     
     // should we rng the parameters again?
   }
@@ -150,8 +245,11 @@ class MapNode {
   }
 
   getDisplayInfo() {
-    let displayInfo = `Capacity: ${this.capacity}\nRuntime: ${this.runtime}\nTurnover: ${this.turnover}\nPeople in queue: ${this.queue.size()}`;
-    return displayInfo;
+    // make sure that this node is actually a ride node
+    if (this.type == 'ride') {
+      let displayInfo = `=== ${this.rideName} ===\nCapacity: ${this.capacity}\nRuntime: ${this.runtime}\nTurnover: ${this.turnover}\nPeople in queue: ${this.queue.size()}`;
+      return displayInfo;
+    }
   }
 
   toggleType() {
@@ -186,7 +284,52 @@ class MapNode {
     agent.startQueueing();
   }
 
+  drawGraph() {
+    if (this.type == "ride") {
+      // possible TODO: make this not rely on magic numbers
+
+      const maxHist = max(this.queueHist);
+      const minHist = 0;
+
+      // draw the max and min values
+      textAlign(CENTER, BASELINE);
+      fill(0);
+      text(maxHist, 15, 125)
+      textAlign(CENTER, BOTTOM);
+      text(minHist, 15, 195)
+      
+      // draw the x and y axes
+      stroke(0);
+      strokeWeight(0.5);
+      line(15, 130, 15, 180);
+      line(15, 180, 120, 180);
+
+      // draw the actual graph
+      stroke(255);
+      noFill();
+      beginShape();
+      for (let i = 0; i < MAX_RIDE_SAMPLES; i++) {
+        if (i < this.queueHist.length) {
+          const xtick = (120 - 15) / MAX_RIDE_SAMPLES * i + 15;
+          const ytick = 180 - (180 - 130) / (maxHist - minHist) * (this.queueHist[i] - minHist);
+          vertex(xtick, ytick);
+        }
+      }
+      endShape();
+    }
+  }
+
   update() {
+    // update the queueHist with the newest queue data
+    if (frameCount % Math.floor(RIDE_SAMPLE_UPDATE_FREQ * FRAME_RATE) == 0) {
+      // this.maxQueueSoFar = max(this.queueHist);
+      this.queueHist.push(this.queue.size());
+      if (this.queueHist.length > MAX_RIDE_SAMPLES) {
+        // remove the oldest data point
+        this.queueHist.shift();
+      }
+    }
+
     // if my turnovercooldown is not ready, update it
     if (this.turnoverCooldown > 0) {
       this.turnoverCooldown = max(0, this.turnoverCooldown - deltaTime / 1000);

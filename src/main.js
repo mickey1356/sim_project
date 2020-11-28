@@ -17,7 +17,7 @@ function setup() {
   createCanvas(WIDTH, HEIGHT);
   
   // set framerate at 30fps
-  frameRate(30);
+  frameRate(FRAME_RATE);
   createMap();
 
   // create some basic control buttons
@@ -49,12 +49,6 @@ function setup() {
 function draw() {
   background(100);
 
-  // draw a rectangle at the top left to display info
-  fill(255, 255, 255, 60);
-  stroke(0);
-  strokeWeight(0.5);
-  rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-
   if (simMap) {
     simMap.drawMap(creatorMode);
   }
@@ -77,7 +71,7 @@ function draw() {
   } else {
     // creator mode loop
     fill(255);
-    textAlign(RIGHT);
+    textAlign(RIGHT, TOP);
     text("====instructions====\n\
           click to place a new node\ndrag from one node to another to form a route\nclick node to toggle its type\nevery ride must be reachable from the entrance\n\
           =====colour key=====\n\
@@ -150,6 +144,10 @@ function toggleSim() {
 function resetSim() {
   isRunning = false;
   agents = [];
+
+  for (const node of nodes) {
+    node.reset();
+  }
 }
 
 function defaultMap() {
@@ -158,6 +156,7 @@ function defaultMap() {
 
 function resetMap() {
   if (creatorMode) {
+    rideID = 0;
     simMap = null;
     nodes = [];
     connections = [];
@@ -172,6 +171,13 @@ function toggleCreate() {
 }
 
 function drawDisplay() {
+  // draw a rectangle at the top left to display info
+  textAlign(LEFT, TOP);
+  fill(255, 255, 255, 60);
+  stroke(0);
+  strokeWeight(0.5);
+  rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
   for (let node of nodes) {
     if (dist(node.x, node.y, mouseX, mouseY) < HOVER_RADIUS && node.type == "ride") {
       textAlign(LEFT);
@@ -180,6 +186,9 @@ function drawDisplay() {
       text(node.getDisplayInfo(), 5, 35, DISPLAY_WIDTH - 5, DISPLAY_HEIGHT - 5);
       // text(node.runCooldowns, 5, 200);
       // text(node.turnoverCooldown, 5, 220);
+      node.drawGraph();
+      // this is just to avoid overdrawing of display info (in case multiple nodes are very close to one another)
+      break;
     }
   }
 }
@@ -198,6 +207,9 @@ function drawRunning() {
 }
 
 function createMap() {
+  // reset the rideID
+  rideID = 0;
+
   // initialise a basic map (0,0 top left; 1,1 btm right)
   let e = new MapNode("entrance", 0.5, 0.7);
   let n1 = new MapNode("ride", 0.2, 0.6);
@@ -246,7 +258,9 @@ function addAgents() {
       //for (var i = 0; i < Math.floor(Math.random() * 4)+1; i++) {
       const agent = new Agent(simMap, priority = false, grp = true);	
       agents.push(agent);
-      agents.push(agent);
+      // need to instantiate a new agent, otherwise, it'll just be one agent being updated twice per loop
+      // possible to identify groupings within the agents? maybe some sort of id
+      // agents.push(agent);
       //}
       console.log("group entered");
     } else {
