@@ -116,7 +116,7 @@ function draw() {
 }
 
 function mouseClicked() {
-  if (!selecting && mouseX > 0 && mouseY > 0 && mouseX < WIDTH && mouseY < HEIGHT) {
+  if (creatorMode && !selecting && mouseX > 0 && mouseY > 0 && mouseX < WIDTH && mouseY < HEIGHT) {
     const node = new MapNode("ride", mouseX / WIDTH, mouseY / HEIGHT);
     nodes.push(node);
     if (simMap == null) {
