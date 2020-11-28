@@ -102,6 +102,7 @@ class SimMap {
   addNode(node) {
     nodes.push(node);
   }
+
 }
 
 class MapNode {
@@ -132,6 +133,25 @@ class MapNode {
       // possible TODO: allow for editing of these parameterss
       this.setRideParameters(getRandomCapacity(), getRandomRuntime(), getRandomTurnover());
     }
+  }
+
+  reset() {
+    // reset the queue, cooldowns, riding agents
+    this.queue = new PriorityQueue((a, b) => a[0] > b[0]);
+    this.ridingAgents = [];
+    this.runCooldowns = [];
+    this.turnoverCooldown = 0;
+    
+    // should we rng the parameters again?
+  }
+
+  getType() {
+    return this.type;
+  }
+
+  getDisplayInfo() {
+    let displayInfo = `Capacity: ${this.capacity}\nRuntime: ${this.runtime}\nTurnover: ${this.turnover}\nPeople in queue: ${this.queue.size()}`;
+    return displayInfo;
   }
 
   toggleType() {

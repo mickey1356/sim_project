@@ -49,12 +49,20 @@ function setup() {
 function draw() {
   background(100);
 
+  // draw a rectangle at the top left to display info
+  fill(255, 255, 255, 60);
+  stroke(0);
+  strokeWeight(0.5);
+  rect(0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
   if (simMap) {
     simMap.drawMap(creatorMode);
   }
 
   // update function
   if (!creatorMode) {
+
+    drawDisplay();
 
     drawRunning();
 
@@ -163,7 +171,20 @@ function toggleCreate() {
   if (!creatorMode) checkMap();
 }
 
-function drawRunning() {
+function drawDisplay() {
+  for (let node of nodes) {
+    if (dist(node.x, node.y, mouseX, mouseY) < HOVER_RADIUS && node.type == "ride") {
+      textAlign(LEFT);
+      noStroke();
+      fill(0);
+      text(node.getDisplayInfo(), 5, 35, DISPLAY_WIDTH - 5, DISPLAY_HEIGHT - 5);
+      // text(node.runCooldowns, 5, 200);
+      // text(node.turnoverCooldown, 5, 220);
+    }
+  }
+}
+
+function drawRunning() {  
   strokeWeight(0.5);
   stroke(0);
   if (isRunning) {
@@ -174,7 +195,6 @@ function drawRunning() {
     rect(8, 7.5, 5, 15);
     rect(16, 7.5, 5, 15);
   }
-
 }
 
 function createMap() {

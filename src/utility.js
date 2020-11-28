@@ -7,6 +7,10 @@ const NODE_RADIUS = 10;
 
 const NODE_TYPES = ["junc", "ride", "entrance"];
 
+const DISPLAY_HEIGHT = 100;
+const DISPLAY_WIDTH = 150;
+const HOVER_RADIUS = 18;
+
 // simulation parameters
 const ARRIVAL_PROB = 0.2;
 const DEPARTURE_PROB = 0.3;
