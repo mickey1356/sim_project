@@ -69,6 +69,12 @@ class SimMap {
     return null;
   }
 
+  updateRides() {
+    for (let ride of this.rides) {
+      ride.update();
+    }
+  }
+
   drawMap(creatorMode) {
     // draw edges
     stroke(255);
@@ -121,6 +127,10 @@ class MapNode {
     } else if (this.type == "ride") {
       this.fill = "#0ab";
       this.img = loadImage(RIDE_IMG_PATH);
+
+      // if this is a ride, just choose random values for the ride parameters
+      // possible TODO: allow for editing of these parameterss
+      this.setRideParameters(getRandomCapacity(), getRandomRuntime(), getRandomTurnover());
     }
   }
 
@@ -135,6 +145,8 @@ class MapNode {
   // runtime: length of the ride (in terms of update cycles)
   // turnover: how long before the next set of people can ride (in terms of update cycles)
   // eg. if turnover == runtime => you only can have one set of riders at any one time
+  // eg. if turnover < runtime => you can have multiple set of riders at any one time
+  // eg. if turnover > runtime => there is "resting period" between consecutive rides
   setRideParameters(capacity, runtime, turnover) {
     this.capacity = capacity;
     this.runtime = runtime;
@@ -142,19 +154,55 @@ class MapNode {
 
     // used to keep track on who is riding and who is queuing.
     this.ridingAgents = [];
-    this.queue = [];
+    this.queue = new PriorityQueue((a, b) => a[0]> b[0]);
 
     // decrement these values in the update loop
-    this.runCooldown = runtime;
-    this.turnoverCooldown = turnover;
+    this.runCooldowns = [];
+    this.turnoverCooldown = 0;
   }
 
-  enqueue(agent) {
-    this.queue.push(agent);
+  enqueue(agent, priority) {
+    this.queue.push([priority, agent]);
+    agent.startQueueing();
   }
 
   update() {
-    // 
+    // if my turnovercooldown is not ready, update it
+    if (this.turnoverCooldown > 0) {
+      this.turnoverCooldown = max(0, this.turnoverCooldown - deltaTime / 1000);
+    }
+
+    // if there is people in the queue and i am ready to receive riders
+    if (!this.queue.isEmpty() && this.turnoverCooldown <= 0) {
+      // reset the turnoverCooldown
+      this.turnoverCooldown = this.turnover;
+      let agents = [];
+      for (let i = 0; i < min(this.capacity, this.queue.size()); i++) {
+        const agt = this.queue.pop()[1];
+        agt.startRiding();
+        agents.push(agt);
+      }
+      this.ridingAgents.push(agents);
+      this.runCooldowns.push(this.runtime);
+    }
+
+    // if there are people riding, update my ridecooldowns
+    if (this.runCooldowns.length > 0) {
+      let dones = 0;
+      for (let i = 0; i < this.runCooldowns.length; i++) {
+        this.runCooldowns[i] -= deltaTime / 1000;
+        if (this.runCooldowns[i] <= 0) {
+          // this means the run is over
+          dones += 1;
+          for (const agt of this.ridingAgents[i]) {
+            agt.doneRiding();
+          }
+        }
+      }
+      // if there are rides that are complete, clear the arrays
+      this.runCooldowns.splice(0, dones);
+      this.ridingAgents.splice(0, dones);
+    }
   }
 
   connect(other) {

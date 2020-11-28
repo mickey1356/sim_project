@@ -74,7 +74,6 @@ function draw() {
           click to place a new node\ndrag from one node to another to form a route\nclick node to toggle its type\nevery ride must be reachable from the entrance\n\
           =====colour key=====\n\
           orange: entrance (max 1)\ncyan: ride\nblack: junction", WIDTH - TEXT_PADDING_RIGHT, TEXT_PADDING_TOP)
-    // add new nodes when you click
 
     let flag = false;
     for (let i = 0; i < nodes.length; i++) {
@@ -211,28 +210,30 @@ function updateLoop() {
     agent.update();
   }
 
+  simMap.updateRides();
+
   removeAgents();
 }
 
 function addAgents() {
   if (Math.random() < ARRIVAL_PROB) {
 	  if (Math.random() < PRIORITY_PROB) {
-		console.log("entered");
-		const agent = new Agent(simMap,priority = true, grp = false);	
-		agents.push(agent);
+      console.log("priority entered");
+      const agent = new Agent(simMap, priority = true, grp = false);	
+      agents.push(agent);
 		
-	} else if (Math.random() < GRP_PROB){
-		//for (var i = 0; i < Math.floor(Math.random() * 4)+1; i++) {
-		const agent = new Agent(simMap, priority = false, grp = true);	
-		agents.push(agent);
-		agents.push(agent);
-		//}
-		console.log("group entered");
-	} else {
-		console.log("entered");
-		const agent = new Agent(simMap, priority = false, grp = false);	
-		agents.push(agent);
-	}
+    } else if (Math.random() < GRP_PROB){
+      //for (var i = 0; i < Math.floor(Math.random() * 4)+1; i++) {
+      const agent = new Agent(simMap, priority = false, grp = true);	
+      agents.push(agent);
+      agents.push(agent);
+      //}
+      console.log("group entered");
+    } else {
+      console.log("entered");
+      const agent = new Agent(simMap, priority = false, grp = false);	
+      agents.push(agent);
+    }
   }
 }
 

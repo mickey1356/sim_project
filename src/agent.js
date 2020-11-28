@@ -10,25 +10,25 @@ const AgentStates = {
 Object.freeze(AgentStates);
 
 class Agent {
-  constructor(map, priority=false, grp = false) {
+  constructor(map, priority = false, grp = false) {
     this.map = map;
 
     this.agentState = AgentStates.ENTERED;
 
     this.x = map.entrance.x;
     this.y = map.entrance.y;
-	this.priority = priority;
-	this.grp = grp
+    this.priority = priority;
+    this.grp = grp
 
     this.curNode = map.entrance;
 	
-	if (this.priority == true){
-		this.fill = 'blue';
-	}
-    else if (this.grp == true){
-		this.fill = 'yellow';
-	} else {this.fill = 'green';}
-	
+    if (this.priority == true){
+      this.fill = 'blue';
+    } else if (this.grp == true){
+      this.fill = 'yellow';
+    } else {
+      this.fill = 'green';
+    }
   }
 
   nextDestination() {
@@ -97,13 +97,28 @@ class Agent {
         }
         break;
       case AgentStates.REACHED:
-        // here you would enqueue them in the ride, but in this case, just set them to finished
-        this.agentState = AgentStates.FINISHED;
+        // enqueue this agent into the ride (ride will deal with them)
+        // the second argument is the priority value, higher priority will be first to get to ride
+        this.targetNode.enqueue(this, 0);
         break;
       case AgentStates.FINISHED:
         this.nextDestination();
         break;
     }
+  }
+
+  // putting this here just to keep track of when the agent starts queuing
+  startQueueing() {
+    this.agentState = AgentStates.QUEUING;
+  }
+
+  // putting this here just to keep track of when the agent reaches the end of the queue
+  startRiding() {
+
+  }
+
+  doneRiding() {
+    this.agentState = AgentStates.FINISHED;
   }
 
   draw() {
