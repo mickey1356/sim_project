@@ -28,9 +28,9 @@ class SimMap {
     }
     this.entrance = entrances[0];
 
-    // check that entrance reaches all nodes
+    // check that entrance reaches all nodes (use the bfs code)
     for (let node of this.rides) {
-      const p = this.getPathToNode(this.entrance, node);
+      const p = this.bfsCheck(this.entrance, node);
       if (p == null) return false;
     }
 
@@ -122,8 +122,8 @@ class SimMap {
     return path;
   }
 
-  // TODO: remove this once we are sure that floyd warshall works
-  getPathToNodeOld(startNode, targetNode) {
+  // need to keep this to ensure connectivity when doing checkMap()
+  bfsCheck(startNode, targetNode) {
     let visited = new WeakMap();
     for (let node of this.nodes) {
       visited.set(node, false);
@@ -260,11 +260,11 @@ class MapNode {
 
   // set some basic ride parameters
   // capacity: how many people can ride at one time
-  // runtime: length of the ride (in terms of update cycles)
-  // turnover: how long before the next set of people can ride (in terms of update cycles)
+  // runtime: length of the ride (in terms of seconds)
+  // turnover: how long before the next set of people can ride (in terms of seconds)
   // eg. if turnover == runtime => you only can have one set of riders at any one time
   // eg. if turnover < runtime => you can have multiple set of riders at any one time
-  // eg. if turnover > runtime => there is "resting period" between consecutive rides
+  // eg. if turnover > runtime => there is a "resting period" between consecutive rides
   setRideParameters(capacity, runtime, turnover) {
     this.capacity = capacity;
     this.runtime = runtime;
@@ -272,7 +272,7 @@ class MapNode {
 
     // used to keep track on who is riding and who is queuing.
     this.ridingAgents = [];
-    this.queue = new PriorityQueue((a, b) => a[0]> b[0]);
+    this.queue = new PriorityQueue((a, b) => a[0] > b[0]);
 
     // decrement these values in the update loop
     this.runCooldowns = [];
@@ -287,31 +287,35 @@ class MapNode {
   drawGraph() {
     if (this.type == "ride") {
       // possible TODO: make this not rely on magic numbers
-
-      const maxHist = max(this.queueHist);
+      const maxHist = max(1, max(this.queueHist));
       const minHist = 0;
 
+      // const RG_MIN_OFF = 7;
+      // const RG_MAX_OFF = 5;
+
       // draw the max and min values
-      textAlign(CENTER, BASELINE);
-      fill(0);
-      text(maxHist, 15, 125)
       textAlign(CENTER, BOTTOM);
-      text(minHist, 15, 195)
-      
+      fill(0);
+      noStroke();
+      text(maxHist, RG_X_START, RG_Y_START);
+      // textAlign(CENTER, BOTTOM);
+      // text(minHist, RG_X_START - RG_MIN_OFF, RG_Y_END + RG_MIN_OFF);
+
       // draw the x and y axes
       stroke(0);
-      strokeWeight(0.5);
-      line(15, 130, 15, 180);
-      line(15, 180, 120, 180);
-
+      strokeWeight(1);
+      line(RG_X_START, RG_Y_START, RG_X_START, RG_Y_END);
+      line(RG_X_START, RG_Y_END, RG_X_END, RG_Y_END);
+      
       // draw the actual graph
-      stroke(255);
+      stroke(255, 0, 0);
+      strokeWeight(0.5);
       noFill();
       beginShape();
       for (let i = 0; i < MAX_RIDE_SAMPLES; i++) {
         if (i < this.queueHist.length) {
-          const xtick = (120 - 15) / MAX_RIDE_SAMPLES * i + 15;
-          const ytick = 180 - (180 - 130) / (maxHist - minHist) * (this.queueHist[i] - minHist);
+          const xtick = (RG_X_END - RG_X_START) / MAX_RIDE_SAMPLES * i + RG_X_START;
+          const ytick = RG_Y_END - (RG_Y_END - RG_Y_START) / (maxHist - minHist) * (this.queueHist[i] - minHist);
           vertex(xtick, ytick);
         }
       }

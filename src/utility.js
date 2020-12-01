@@ -8,15 +8,27 @@ const NODE_RADIUS = 10;
 const NODE_TYPES = ["junc", "ride", "entrance"];
 
 // display information parameters
-const DISPLAY_HEIGHT = 200;
+const DISPLAY_HEIGHT = 175;
 const DISPLAY_WIDTH = 150;
-const HOVER_RADIUS = 20;
+const HOVER_RADIUS = 30;
 
 const MAX_RIDE_SAMPLES = 100; // keep up to this amount of queue-data
-const MAX_AGT_SAMPLES = 100; // keep up to this amount of agent-data
 const RIDE_SAMPLE_UPDATE_FREQ = 0.1 // update the graph every x seconds
 
-let rideID = 0;
+const RG_X_START = 20;
+const RG_X_END = 120;
+const RG_Y_START = 135;
+const RG_Y_END = 185;
+
+// global stats parameters
+const STATS_WIDTH = 400;
+const STATS_HEIGHT = 200;
+
+const MAX_AGT_SAMPLES = 200; // keep up to this amount of agent-data
+const AGT_SAMPLE_UPDATE_FREQ = 0.2  // update the graphs every x seconds
+
+const GG_HEIGHT = 50;
+const GG_WIDTH = 100;
 
 // simulation parameters
 const ARRIVAL_PROB = 0.2;

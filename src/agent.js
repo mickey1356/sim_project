@@ -21,6 +21,10 @@ class Agent {
     this.grp = grp
 
     this.curNode = map.entrance;
+
+    this.enteredTime = frameCount;
+    this.queueTime = 0;
+    this.numRidesTaken = 0;
 	
     if (this.priority == true){
       this.fill = 'blue';
@@ -116,11 +120,14 @@ class Agent {
   // putting this here just to keep track of when the agent starts queuing
   startQueueing() {
     this.agentState = AgentStates.QUEUING;
+    this.startQueueTime = frameCount;
   }
 
   // putting this here just to keep track of when the agent reaches the end of the queue
   startRiding() {
-
+    this.numRidesTaken++;
+    const queueTime = (frameCount - this.startQueueTime) / FRAME_RATE;
+    this.queueTime += queueTime;
   }
 
   doneRiding() {
