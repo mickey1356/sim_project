@@ -58,7 +58,7 @@ class SimMap {
   // taken from the pseudocode in wikipedia: https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
   floydWarshall() {
     const N = this.nodes.length;
-    let dist = [];
+    this.dist = [];
     this.next = [];
     let i = 0;
 
@@ -69,7 +69,7 @@ class SimMap {
         tDist.push(Infinity);
         tNext.push(null);
       }
-      dist.push(tDist);
+      this.dist.push(tDist);
       this.next.push(tNext);
     }
 
@@ -77,7 +77,7 @@ class SimMap {
       for (let edge of this.nodes[i].connections) {
         for (let j = 0; j < N; j++) {
           if (this.nodes[j] === edge[0]) {
-            dist[i][j] = edge[1];
+            this.dist[i][j] = edge[1];
             this.next[i][j] = j;
             break;
           }
@@ -85,14 +85,14 @@ class SimMap {
       }
     }
     for (i = 0; i < N; i++) {
-      dist[i][i] = 0;
+      this.dist[i][i] = 0;
       this.next[i][i] = i;
     }
     for (let k = 0; k < N; k++) {
       for (i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
-          if (dist[i][j] > dist[i][k] + dist[k][j]) {
-            dist[i][j] = dist[i][k] + dist[k][j];
+          if (this.dist[i][j] > this.dist[i][k] + this.dist[k][j]) {
+            this.dist[i][j] = this.dist[i][k] + this.dist[k][j];
             this.next[i][j] = this.next[i][k];
           }
         }
@@ -185,6 +185,56 @@ class SimMap {
     nodes.push(node);
   }
 
+  getRideInfoFromNode(startNode) {
+    let retInfo = [];
+    let startNodeIndex;
+    for (let i = 0; i < this.nodes.length; i++) {
+      if (this.nodes[i] === startNode) {
+        startNodeIndex = i;
+        break;
+      }
+    }
+    let minQ = Infinity, maxQ = 0, minD = Infinity, maxD = 0;
+    for (let i = 0; i < this.nodes.length; i++) {
+      // we only want to get ride info (get queue time and distance)
+      if (i != startNodeIndex && this.nodes[i].type == "ride") {
+        const queue = this.nodes[i].getQueueTime();
+        const distance = this.dist[startNodeIndex][i];
+        minQ = min(queue, minQ);
+        maxQ = max(queue, maxQ);
+        minD = min(distance, minD);
+        maxD = max(distance, maxD);
+        retInfo.push([distance, queue, this.nodes[i]]);
+      }
+    }
+    // normalise this info (so that we can score the rides effectively)
+    const rangeQ = max(maxQ - minQ, 0.1);
+    const rangeD = max(maxD - minD, 1);
+    // console.log(rangeQ + " " + rangeD);
+    for (let i = 0; i < retInfo.length; i++) {
+      retInfo[i][0] = 1 - (retInfo[i][0] - minD) / rangeD;
+      retInfo[i][1] = 1 - (retInfo[i][1] - minQ) / rangeQ;
+    }
+    return retInfo;
+  }
+
+  getAverageQueueTime() {
+    let totalQueueTimes = 0;
+    for (let ride of this.rides) {
+      totalQueueTimes += ride.getQueueTime();
+    }
+    return totalQueueTimes / this.rides.length;
+  }
+
+  getMinQueueTime() {
+    let minQueueTime = this.rides[0].getQueueTime();
+    for (let i = 1; i < this.rides.length; i++) {
+      if (this.rides[i].getQueueTime() < minQueueTime) {
+        minQueueTime = this.rides[i].getQueueTime();
+      }
+    }
+    return minQueueTime;
+  }
 }
 
 class MapNode {
@@ -220,12 +270,18 @@ class MapNode {
 
       // for rides, let us store how many people are in queue at each second (basically every 30 frames)
       this.queueHist = [0];
-      this.maxQueueSoFar = 1;
+      // this.maxQueueSoFar = 1;
     }
   }
 
   setRideName(rideID) {
     this.rideName = `Ride ${rideID}`;
+  }
+
+  getQueueTime() {
+    if (this.type == "ride") {
+      return int(ceil(this.queue.size() / this.capacity)) * this.turnover;
+    } else return 0;
   }
 
   reset() {
@@ -235,7 +291,7 @@ class MapNode {
     this.runCooldowns = [];
     this.turnoverCooldown = 0;
     this.queueHist = [0];
-    this.maxQueueSoFar = 1;
+    // this.maxQueueSoFar = 1;
     
     // should we rng the parameters again?
   }
@@ -247,7 +303,7 @@ class MapNode {
   getDisplayInfo() {
     // make sure that this node is actually a ride node
     if (this.type == 'ride') {
-      let displayInfo = `=== ${this.rideName} ===\nCapacity: ${this.capacity}\nRuntime: ${this.runtime}\nTurnover: ${this.turnover}\nPeople in queue: ${this.queue.size()}`;
+      let displayInfo = `=== ${this.rideName} ===\nCapacity: ${this.capacity}\nRuntime: ${this.runtime}\nTurnover: ${this.turnover}\nQueue time: ${this.getQueueTime()}`;
       return displayInfo;
     }
   }
@@ -325,9 +381,10 @@ class MapNode {
 
   update() {
     // update the queueHist with the newest queue data
-    if (frameCount % Math.floor(RIDE_SAMPLE_UPDATE_FREQ * FRAME_RATE) == 0) {
+    if (frameRunning % Math.floor(RIDE_SAMPLE_UPDATE_FREQ * FRAME_RATE) == 0) {
       // this.maxQueueSoFar = max(this.queueHist);
-      this.queueHist.push(this.queue.size());
+      const queueTime = int(ceil(this.queue.size() / this.capacity)) * this.turnover;
+      this.queueHist.push(queueTime);
       if (this.queueHist.length > MAX_RIDE_SAMPLES) {
         // remove the oldest data point
         this.queueHist.shift();

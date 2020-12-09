@@ -25,16 +25,23 @@ const STATS_WIDTH = 400;
 const STATS_HEIGHT = 200;
 
 const MAX_AGT_SAMPLES = 200; // keep up to this amount of agent-data
-const AGT_SAMPLE_UPDATE_FREQ = 0.2  // update the graphs every x seconds
+const AGT_SAMPLE_UPDATE_FREQ = 0.5  // update the graphs every x seconds
 
 const GG_HEIGHT = 50;
 const GG_WIDTH = 100;
 
 // simulation parameters
 const ARRIVAL_PROB = 0.2;
-const DEPARTURE_PROB = 0.3;
-const PRIORITY_PROB = 0.1;
-const GRP_PROB = 0.9;
+
+const CROWD_TURNAWAY_PROB = 0.9; // have x chance of leaving if the crowds are high
+const CROWD_DEPARTURE_PROB = 0.4; // leaving if the crowds are high (after actually entering)
+const RIDES_FOR_SATISFACTION = 0.8; // ride at least x * the number of rides available
+const SATISFIED_DEPARTURE_PROB = 0.9; // leaving once the agent is satisfied
+const DEPARTURE_PROB = 0.05; // low chance to leave for whatever other reason
+
+const PRIORITY_PROB = 0.1; // x of all visitors are priority
+const GRP_PROB = 0.6 + PRIORITY_PROB; // x of all visitors are groups
+
 const MOVE_SPEED = 100; // moves x units per second
 
 // resources and images
@@ -52,6 +59,7 @@ const TEXT_PADDING_RIGHT = 10;
 
 // application constants
 const FRAME_RATE = 30;
+let frameRunning = 0;
 
 function getRandomColor() {
   const letters = '0123456789ABCDEF';
