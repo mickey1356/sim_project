@@ -29,11 +29,11 @@ Our model aims to provide park owners with an easily scalable tool that aids the
 
 ### Running
 
-You can watch a short demo [here](https://www.youtube.com/watch?v=8OWnYG8p9ls)
+You can watch a short demo [here](https://www.youtube.com/watch?v=8OWnYG8p9ls).
 
 **Online**
 
-This project is permanently live at [this page](mickey1356.github.io/sim_project).
+This project is permanently live at [this page](https://mickey1356.github.io/sim_project).
 
 **Offline**
 
