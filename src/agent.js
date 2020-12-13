@@ -12,7 +12,7 @@ const AgentStates = {
 Object.freeze(AgentStates);
 
 class Agent {
-  constructor(map, priority = false, grp = false) {
+  constructor(map, priority = false, size = 1) {
     this.map = map;
 
     this.agentState = AgentStates.ENTERING;
@@ -20,7 +20,7 @@ class Agent {
     this.x = map.entrance.x;
     this.y = map.entrance.y;
     this.priority = priority;
-    this.grp = grp
+    this.size = size
 
     this.curNode = map.entrance;
 
@@ -32,17 +32,17 @@ class Agent {
     // given a ride with distance d and waiting time w, the score of the ride is
     // m1 * d + m2 * w where m1 and m2 are constants describing how important those variables are
     // we also set another variable that suggests whether the park is too crowded for them to stay
-    if (this.priority == true){
+    if (this.priority == true) {
       this.fill = 'blue';
 
       // priority visitors do not care about the waiting time
       this.m1 = 0.9;
       this.m2 = 0.1;
-      
+
       // the park has to be really crowded for them to leave (since they have priority)
       this.limit = 10;
-    } else if (this.grp == true){
-      this.fill = 'yellow';
+    } else if (this.size != 1) {
+      this.fill = 'pink';
 
       // group visitors would probably them both equally
       this.m1 = 0.5;
@@ -75,17 +75,20 @@ class Agent {
       this.targetNode = this.map.entrance;
       this.agentState = AgentStates.EXITING;
       this.fill = "white";
+
     } else if (this.numRidesTaken >= int(ceil(RIDES_FOR_SATISFACTION * this.map.rides.length)) && Math.random() < SATISFIED_DEPARTURE_PROB) {
       // check to see if this agent will leave based on the number of rides taken
       this.targetNode = this.map.entrance;
       this.agentState = AgentStates.EXITING;
       this.fill = "white";
+
     } else if (this.agentState != AgentStates.ENTERED && Math.random() < DEPARTURE_PROB) {
       // randomly leaving
       this.targetNode = this.map.entrance;
       this.agentState = AgentStates.EXITING;
       this.fill = "white";
     } else {
+
       // pick another ride
       const rides = this.map.rides.filter((r) => !(r === this.curNode));
       if (rides.length == 0) {
@@ -94,6 +97,7 @@ class Agent {
         this.agentState = AgentStates.EXITING;
         this.fill = "white";
       } else {
+
         // assign a score to each ride
         let nextRideInfo = this.map.getRideInfoFromNode(this.curNode);
         let scores = [];
@@ -178,8 +182,13 @@ class Agent {
       case AgentStates.REACHED:
         // enqueue this agent into the ride (ride will deal with them)
         // the second argument is the priority value, higher priority will be first to get to ride
-        this.targetNode.enqueue(this, 0);
-        break;
+        if (this.priority == true) {
+          this.targetNode.enqueue(this, 1);
+          break;
+        } else {
+          this.targetNode.enqueue(this, 0);
+          break;
+        }
       case AgentStates.FINISHED:
         this.nextDestination();
         break;
@@ -211,10 +220,20 @@ class Agent {
       this.x = lerp(this.initialX, this.targetX, this.lerpT);
       this.y = lerp(this.initialY, this.targetY, this.lerpT);
     }
-    if (this.priority == true){
+    if (this.priority == true) {
       ellipse(this.x, this.y, 1.5 * AGENT_RADIUS);
+    } else if (this.size != 1) {
+      for (var i = 0; i < this.size; i++) {
+        ellipse(this.x, this.y + i * AGENT_RADIUS, AGENT_RADIUS);
+      }
     } else {
       ellipse(this.x, this.y, AGENT_RADIUS);
-      }
     }
+  }
+}
+
+class Group {
+  constructor(list_of_agents) {
+    this.list = list_of_agents
+  }
 }

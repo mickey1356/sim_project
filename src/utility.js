@@ -65,9 +65,9 @@ function getRandomColor() {
   const letters = '0123456789ABCDEF';
   let color = '#';
   for (var i = 0; i < 6; i++) {
-		color += letters[Math.floor(Math.random()*16)];
-		}
-	
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+
   return color;
 }
 
@@ -98,6 +98,7 @@ class PriorityQueue {
   constructor(comparator = (a, b) => a > b) {
     this._heap = [];
     this._comparator = comparator;
+    this.howmany = 0
   }
   size() {
     return this._heap.length;

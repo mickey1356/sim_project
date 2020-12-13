@@ -10,7 +10,7 @@ class SimMap {
 
     // set the rideIDs
     for (let i = 0; i < this.rides.length; i++) {
-      this.rides[i].setRideName(i+1);
+      this.rides[i].setRideName(i + 1);
     }
 
     // run floyd warshall for setup()
@@ -36,7 +36,7 @@ class SimMap {
 
     // set the rideIDs
     for (let i = 0; i < this.rides.length; i++) {
-      this.rides[i].setRideName(i+1);
+      this.rides[i].setRideName(i + 1);
     }
 
     // run floyd warshall for setup
@@ -286,13 +286,13 @@ class MapNode {
 
   reset() {
     // reset the queue, cooldowns, riding agents
-    this.queue = new PriorityQueue((a, b) => a[0] > b[0]);
+    this.queue = new PriorityQueue((a, b) => a[0] > b[0]); //y33t
     this.ridingAgents = [];
     this.runCooldowns = [];
     this.turnoverCooldown = 0;
     this.queueHist = [0];
     // this.maxQueueSoFar = 1;
-    
+
     // should we rng the parameters again?
   }
 
@@ -328,7 +328,7 @@ class MapNode {
 
     // used to keep track on who is riding and who is queuing.
     this.ridingAgents = [];
-    this.queue = new PriorityQueue((a, b) => a[0] > b[0]);
+    this.queue = new PriorityQueue((a, b) => a[0] > b[0]); //y33t
 
     // decrement these values in the update loop
     this.runCooldowns = [];
@@ -362,7 +362,7 @@ class MapNode {
       strokeWeight(1);
       line(RG_X_START, RG_Y_START, RG_X_START, RG_Y_END);
       line(RG_X_START, RG_Y_END, RG_X_END, RG_Y_END);
-      
+
       // draw the actual graph
       stroke(255, 0, 0);
       strokeWeight(0.5);

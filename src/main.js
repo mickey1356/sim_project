@@ -26,6 +26,7 @@ let rideHist = [];
 
 let totalAgtsLeft = 0;
 let agtsLeftHist = [];
+let numExitedAgents = 0;
 
 let averageQueueTime = 0;
 let avgQueueTimeHist = [];
@@ -39,7 +40,7 @@ let selecting = false;
 
 function setup() {
   createCanvas(WIDTH, HEIGHT);
-  
+
   // set framerate at 30fps
   frameRate(FRAME_RATE);
   createMap();
@@ -81,7 +82,7 @@ function draw() {
   fill(0);
   noStroke();
   textAlign(RIGHT, TOP);
-  text(`${time.toFixed(2)}\n${frameRunning}`, WIDTH - 5, 5);
+  text(`${time.toFixed(2)}\n${frameRunning}\n${timeHist.length}`, WIDTH - 5, 5);
 
   if (simMap) {
     simMap.drawMap(creatorMode);
@@ -207,6 +208,7 @@ function resetSim() {
 
   totalAgtsLeft = 0;
   agtsLeftHist = [];
+  numExitedAgents = 0;
 
   averageQueueTime = 0;
   avgQueueTimeHist = [];
@@ -273,7 +275,7 @@ function drawDisplay() {
       stroke(0);
       strokeWeight(0.5);
       rect(0, 30, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-      
+
       textAlign(LEFT, TOP);
       noStroke();
       fill(0);
@@ -287,7 +289,7 @@ function drawDisplay() {
   }
 }
 
-function drawRunning() {  
+function drawRunning() {
   strokeWeight(0.5);
   stroke(0);
   if (isRunning) {
@@ -311,12 +313,12 @@ function drawStats() {
   noStroke();
   fill(0);
 
-  const exitedVisitors = max(1, totalVisitors - agents.length);
-  
+  const exitedVisitors = max(1, numExitedAgents);
+
   // show: total number of visitors, visitors currently in park
   statsString = `=== Global Stats ===
   Total visitors (lifetime): ${totalVisitors}
-  Current visitors: ${agents.length}
+  Current visitors: ${totalVisitors - numExitedAgents}
   Missed visitors: ${totalAgtsLeft}
   Average time spent (per visitor): ${(totalTimeSpent / exitedVisitors).toFixed(3)}
   Average queue time (per ride): ${(averageQueueTime).toFixed(3)}`;
@@ -327,7 +329,7 @@ function drawStats() {
   const btmBorder = HEIGHT;
 
   // possible todo: remove the magic numbers
-  drawGraph("time in park", timeSpentHist, leftBorder + 25, btmBorder - 60, 25);
+  drawGraph("time in park", timeSpentHist, leftBorder + 25, btmBorder - 60, 30);
   drawGraph("missed fraction", agtsLeftHist, leftBorder + 150, btmBorder - 60, 1);
   drawGraph("ride queue times", avgQueueTimeHist, leftBorder + 275, btmBorder - 60, 10);
 
@@ -411,14 +413,14 @@ function updateLoop() {
 
   // calculate averageQueueTime (because there's nowhere else to calculate this)
   averageQueueTime = simMap.getAverageQueueTime();
-  
+
   // update the histories with the calculated data
-  const exitedVisitors = max(1, totalVisitors - agents.length);
+  const exitedVisitors = max(1, numExitedAgents);
   if (frameRunning % Math.floor(AGT_SAMPLE_UPDATE_FREQ * FRAME_RATE) == 0) {
     timeHist.push(time);
 
     totalVisitorsHist.push(totalVisitors);
-    
+
     timeSpentHist.push(totalTimeSpent / exitedVisitors);
     timeQueueHist.push(totalTimeQueue / exitedVisitors);
     rideHist.push(totalRides / exitedVisitors);
@@ -447,23 +449,23 @@ function addAgents() {
     totalVisitors++;
 
     const typeRNG = Math.random();
-	  if (typeRNG < PRIORITY_PROB) {
+    if (typeRNG < PRIORITY_PROB) {
       // console.log("priority entered");
-      const agent = new Agent(simMap, priority = true, grp = false);	
+      const agent = new Agent(simMap, priority = true, grp = 1);
       agents.push(agent);
-		
-    } else if (typeRNG < GRP_PROB){
+
+    } else if (typeRNG < GRP_PROB) {
       // console.log("group entered");
-      //for (var i = 0; i < Math.floor(Math.random() * 4)+1; i++) {
-      const agent = new Agent(simMap, priority = false, grp = true);	
+      const agent = new Agent(simMap, priority = false, grp = Math.ceil(Math.random() * 4) + 1);
       agents.push(agent);
+      grp += 1
+      totalVisitors += agent.size - 1;
       // need to instantiate a new agent, otherwise, it'll just be one agent being updated twice per loop
       // possible to identify groupings within the agents? maybe some sort of id
       // agents.push(agent);
-      //}
     } else {
       // console.log("entered");
-      const agent = new Agent(simMap, priority = false, grp = false);	
+      const agent = new Agent(simMap, priority = false, grp = 1);
       agents.push(agent);
     }
   }
@@ -471,10 +473,12 @@ function addAgents() {
 
 function removeAgents() {
   // we need to keep track of the cummulative total of how many people left
-  leftAgents = agents.filter((agt) => agt.agentState == AgentStates.LEFT);
-  totalAgtsLeft += leftAgents.length;
+  let leftAgents = agents.filter((agt) => agt.agentState == AgentStates.LEFT);
+  for (let agent of leftAgents) {
+    totalAgtsLeft += agent.size;
+  }
 
-  exitedAgents = agents.filter((agt) => agt.agentState == AgentStates.EXITED);
+  let exitedAgents = agents.filter((agt) => agt.agentState == AgentStates.EXITED);
   agents = agents.filter((agt) => (agt.agentState != AgentStates.EXITED && agt.agentState != AgentStates.LEFT));
 
   // let times = frameRunning * exitedAgents.length;
@@ -484,5 +488,6 @@ function removeAgents() {
     totalTimeSpent += (frameRunning - agt.enteredTime) / FRAME_RATE;
     totalTimeQueue += agt.timeSpentQueuing;
     totalRides += agt.numRidesTaken;
+    numExitedAgents += agt.size;
   }
 }
