@@ -32,9 +32,11 @@ Our model aims to provide park owners with an easily scalable tool that aids the
 You can watch a short demo [here](https://www.youtube.com/watch?v=8OWnYG8p9ls)
 
 **Online**
-This project is permanently live at mickey1356.github.io/sim_project.
+
+This project is permanently live at [this page](mickey1356.github.io/sim_project).
 
 **Offline**
+
 First, clone/download this repository. You can use the download link at the top right of [this page](https://github.com/Mickey1356/sim_project.git), or if you have Git installed, just run `git clone https://github.com/Mickey1356/sim_project.git` in the directory of your choice.
 
 Then, you need to have a way to launch a local server. We list two easy ways to do so.
